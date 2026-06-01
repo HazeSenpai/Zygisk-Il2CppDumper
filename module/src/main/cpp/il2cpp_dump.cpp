@@ -9,6 +9,7 @@
 #include "log.h"
 
 #include <cstdint>
+#include <cinttypes>
 #include <cstdio>
 #include <cstring>
 #include <algorithm>
@@ -45,7 +46,7 @@ static bool dump_libil2cpp_so(const std::string &out_path) {
     while (std::getline(maps, line)) {
         if (line.find("libil2cpp.so") == std::string::npos) continue;
         Region r{};
-        if (sscanf(line.c_str(), "%lx-%lx %4s", &r.start, &r.end, r.perms) < 3) continue;
+        if (sscanf(line.c_str(), "%" SCNxPTR "-%" SCNxPTR " %4s", &r.start, &r.end, r.perms) < 3) continue;
         if (r.perms[0] != 'r') continue;  // need readable
         regions.push_back(r);
     }
@@ -58,9 +59,9 @@ static bool dump_libil2cpp_so(const std::string &out_path) {
         if (r.end   > end ) end  = r.end;
     }
     size_t total = end - base;
-    LOGI("libil2cpp.so: base=0x%lx end=0x%lx size=%zu regions=%zu",
+    LOGI("libil2cpp.so: base=0x%" PRIxPTR " end=0x%" PRIxPTR " size=%zu regions=%zu",
          base, end, total, regions.size());
-    LOGI(">>>>>>>>>> use this BASE in SoFixer: 0x%lx <<<<<<<<<<", base);
+    LOGI(">>>>>>>>>> use this BASE in SoFixer: 0x%" PRIxPTR " <<<<<<<<<<", base);
 
     FILE *f = fopen(out_path.c_str(), "wb");
     if (!f) { LOGE("cannot open %s", out_path.c_str()); return false; }
@@ -119,7 +120,7 @@ static bool dump_global_metadata(const std::string &out_path) {
     while (std::getline(maps, line)) {
         uintptr_t s, e;
         char perms[5] = {0};
-        if (sscanf(line.c_str(), "%lx-%lx %4s", &s, &e, perms) < 3) continue;
+        if (sscanf(line.c_str(), "%" SCNxPTR "-%" SCNxPTR " %4s", &s, &e, perms) < 3) continue;
         if (perms[0] != 'r') continue;
 
         size_t region_size = e - s;
@@ -138,7 +139,7 @@ static bool dump_global_metadata(const std::string &out_path) {
                  size, region_size);
             size = region_size;
         }
-        LOGI("global-metadata @ 0x%lx size=%zu (region=%zu)", s, size, region_size);
+        LOGI("global-metadata @ 0x%" PRIxPTR " size=%zu (region=%zu)", s, size, region_size);
 
         FILE *f = fopen(out_path.c_str(), "wb");
         if (!f) { LOGE("cannot open %s", out_path.c_str()); return false; }
